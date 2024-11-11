@@ -94,9 +94,11 @@ class Game:
         self.flags = []  # List to store flags
         self.tower_speed = 5
         self.score = 0
+        self.flags_collected = 0  # Track number of American flags collected
         self.background = pygame.image.load('background.png')  # Load background image
         self.background = pygame.transform.scale(self.background, (SCREEN_WIDTH, SCREEN_HEIGHT))  # Resize to screen size
         self.congratulations_screen = False  # Track if the congrats screen is shown
+        self.game_over_screen = False  # Track if game over screen is shown
 
     def spawn_tower(self):
         """Randomly spawn a tower at the top of the screen, but only if there are less than 3 towers on screen."""
@@ -127,14 +129,17 @@ class Game:
         for flag in self.flags:
             if self.plane.rect.colliderect(flag.rect):
                 collected_flags.append(flag)
+                self.flags_collected += 1  # Increase flags collected counter
                 self.score -= 1  # Decrease score when collecting an American flag
 
         return collected_towers, collected_flags
 
     def update(self):
         """Update game elements."""
+        if self.game_over_screen:
+            return  # Stop updating game elements when the game over screen is shown
         if self.congratulations_screen:
-            return  # Stop updating game elements when the congratulation screen is shown
+            return  # Stop updating game elements when the congratulations screen is shown
 
         keys = pygame.key.get_pressed()
         self.plane.move(keys)
@@ -167,6 +172,10 @@ class Game:
         if self.score >= 25 and not self.congratulations_screen:
             self.congratulations_screen = True  # Show congratulations screen
 
+        # Check if player has collected 3 flags
+        if self.flags_collected >= 3 and not self.game_over_screen:
+            self.game_over_screen = True  # Show game over screen
+
     def draw(self):
         """Draw everything on the screen."""
         self.screen.blit(self.background, (0, 0))  # Draw background
@@ -182,26 +191,44 @@ class Game:
         score_text = font.render(f"Score: {int(self.score)}", True, (0, 0, 0))
         self.screen.blit(score_text, (10, 10))
 
+        # Display the number of flags collected
+        flags_text = font.render(f"Flags Collected: {self.flags_collected}", True, (0, 0, 0))
+        self.screen.blit(flags_text, (10, 50))
+
         # If the congratulations screen is active, display the message
         if self.congratulations_screen:
             self.display_congratulations()
 
+        # If game over, display the "Game Over" screen
+        if self.game_over_screen:
+            self.display_game_over()
+
         pygame.display.update()
 
     def display_congratulations(self):
-        """Display the congratulatory message."""
-        # Dynamically adjust the font size based on screen size
-        font_size = int(SCREEN_WIDTH * 0.06)  # 8% of the screen width
-        font = pygame.font.SysFont(None, font_size)
-        message = "Congratulations! You destroyed America!"
-        text = font.render(message, True, BLACK)
-        text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 3))
-        self.screen.blit(text, text_rect)
+        """Display the congratulations screen."""
+        font = pygame.font.SysFont(None, int(SCREEN_WIDTH * 0.08))
+        message = font.render("Congratulations! You destroyed everything!", True, BLACK)
+        text_rect = message.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
+        self.screen.blit(message, text_rect)
 
-        # Draw options for the player to quit or restart
+        # Display restart and quit options
         font_small = pygame.font.SysFont(None, 36)
         restart_text = font_small.render("Press 'R' to Restart or 'Q' to Quit", True, BLACK)
-        restart_rect = restart_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 100))
+        restart_rect = restart_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50))
+        self.screen.blit(restart_text, restart_rect)
+
+    def display_game_over(self):
+        """Display the game over screen."""
+        font = pygame.font.SysFont(None, int(SCREEN_WIDTH * 0.08))
+        message = font.render("Game Over! Fuck America!", True, BLACK)
+        text_rect = message.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
+        self.screen.blit(message, text_rect)
+
+        # Display restart and quit options
+        font_small = pygame.font.SysFont(None, 36)
+        restart_text = font_small.render("Press 'R' to Restart or 'Q' to Quit", True, BLACK)
+        restart_rect = restart_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50))
         self.screen.blit(restart_text, restart_rect)
 
     def handle_events(self):
@@ -215,15 +242,22 @@ class Game:
                         self.restart_game()
                     elif event.key == pygame.K_q:
                         self.running = False
+                elif self.game_over_screen:
+                    if event.key == pygame.K_r:
+                        self.restart_game()
+                    elif event.key == pygame.K_q:
+                        self.running = False
 
     def restart_game(self):
         """Restart the game."""
         self.score = 0
+        self.flags_collected = 0
         self.towers = []
         self.flags = []
         self.plane.x = SCREEN_WIDTH // 2 - PLANE_WIDTH // 2
         self.plane.y = SCREEN_HEIGHT - PLANE_HEIGHT - 10
         self.congratulations_screen = False
+        self.game_over_screen = False
 
     def run(self):
         """Main game loop."""

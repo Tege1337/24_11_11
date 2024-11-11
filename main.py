@@ -207,8 +207,8 @@ class Game:
 
     def display_congratulations(self):
         """Display the congratulations screen."""
-        font = pygame.font.SysFont(None, int(SCREEN_WIDTH * 0.08))
-        message = font.render("Congratulations! You destroyed everything!", True, BLACK)
+        font = pygame.font.SysFont(None, int(SCREEN_WIDTH * 0.065))
+        message = font.render("Congratulations! You destroyed America!", True, BLACK)
         text_rect = message.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
         self.screen.blit(message, text_rect)
 

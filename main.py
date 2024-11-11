@@ -12,14 +12,15 @@ FPS = 60
 
 # Colors
 WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
 
 # Plane and tower dimensions (based on percentages)
-PLANE_WIDTH = int(SCREEN_WIDTH * 0.13)  # Plane width is 20% of screen width
+PLANE_WIDTH = int(SCREEN_WIDTH * 0.13)  # Plane width is 13% of screen width
 PLANE_HEIGHT = int(SCREEN_HEIGHT * 0.1)  # Plane height is 10% of screen height
-TOWER_WIDTH = int(SCREEN_WIDTH * 0.2)  # Tower width is 12% of screen width
+TOWER_WIDTH = int(SCREEN_WIDTH * 0.2)  # Tower width is 20% of screen width
 TOWER_HEIGHT = int(SCREEN_HEIGHT * 0.15)  # Tower height is 15% of screen height
-FLAG_WIDTH = int(SCREEN_WIDTH * 0.08)  # Flag width is 10% of screen width
-FLAG_HEIGHT = int(SCREEN_HEIGHT * 0.11)  # Flag height is 8% of screen height
+FLAG_WIDTH = int(SCREEN_WIDTH * 0.08)  # Flag width is 8% of screen width
+FLAG_HEIGHT = int(SCREEN_HEIGHT * 0.11)  # Flag height is 11% of screen height
 
 class Plane:
     def __init__(self, x, y):
@@ -95,6 +96,7 @@ class Game:
         self.score = 0
         self.background = pygame.image.load('background.png')  # Load background image
         self.background = pygame.transform.scale(self.background, (SCREEN_WIDTH, SCREEN_HEIGHT))  # Resize to screen size
+        self.congratulations_screen = False  # Track if the congrats screen is shown
 
     def spawn_tower(self):
         """Randomly spawn a tower at the top of the screen, but only if there are less than 3 towers on screen."""
@@ -131,6 +133,9 @@ class Game:
 
     def update(self):
         """Update game elements."""
+        if self.congratulations_screen:
+            return  # Stop updating game elements when the congratulation screen is shown
+
         keys = pygame.key.get_pressed()
         self.plane.move(keys)
 
@@ -158,6 +163,10 @@ class Game:
         # Spawn an American flag with 0.5% chance every frame
         self.spawn_flag()
 
+        # Check if score reaches 25
+        if self.score >= 25 and not self.congratulations_screen:
+            self.congratulations_screen = True  # Show congratulations screen
+
     def draw(self):
         """Draw everything on the screen."""
         self.screen.blit(self.background, (0, 0))  # Draw background
@@ -173,7 +182,48 @@ class Game:
         score_text = font.render(f"Score: {int(self.score)}", True, (0, 0, 0))
         self.screen.blit(score_text, (10, 10))
 
+        # If the congratulations screen is active, display the message
+        if self.congratulations_screen:
+            self.display_congratulations()
+
         pygame.display.update()
+
+    def display_congratulations(self):
+        """Display the congratulatory message."""
+        # Dynamically adjust the font size based on screen size
+        font_size = int(SCREEN_WIDTH * 0.06)  # 8% of the screen width
+        font = pygame.font.SysFont(None, font_size)
+        message = "Congratulations! You destroyed America!"
+        text = font.render(message, True, BLACK)
+        text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 3))
+        self.screen.blit(text, text_rect)
+
+        # Draw options for the player to quit or restart
+        font_small = pygame.font.SysFont(None, 36)
+        restart_text = font_small.render("Press 'R' to Restart or 'Q' to Quit", True, BLACK)
+        restart_rect = restart_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 100))
+        self.screen.blit(restart_text, restart_rect)
+
+    def handle_events(self):
+        """Handle user inputs and events."""
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+            if event.type == pygame.KEYDOWN:
+                if self.congratulations_screen:
+                    if event.key == pygame.K_r:
+                        self.restart_game()
+                    elif event.key == pygame.K_q:
+                        self.running = False
+
+    def restart_game(self):
+        """Restart the game."""
+        self.score = 0
+        self.towers = []
+        self.flags = []
+        self.plane.x = SCREEN_WIDTH // 2 - PLANE_WIDTH // 2
+        self.plane.y = SCREEN_HEIGHT - PLANE_HEIGHT - 10
+        self.congratulations_screen = False
 
     def run(self):
         """Main game loop."""
@@ -185,12 +235,6 @@ class Game:
 
         pygame.quit()
         sys.exit()
-
-    def handle_events(self):
-        """Handle user inputs and events."""
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                self.running = False
 
 # Start the game
 if __name__ == "__main__":

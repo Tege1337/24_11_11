@@ -5,9 +5,11 @@ import sys
 # Initialize Pygame
 pygame.init()
 
-# Screen dimensions
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 600
+# Set the display mode first
+screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+SCREEN_WIDTH, SCREEN_HEIGHT = screen.get_size()
+
+# FPS
 FPS = 60
 
 # Colors
@@ -85,8 +87,9 @@ class AmericanFlag:
 
 class Game:
     def __init__(self):
-        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-        pygame.display.set_caption("Plane Collection Game")
+        # Fullscreen mode
+        self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        pygame.display.set_caption("Plane Game") 
         self.clock = pygame.time.Clock()
         self.running = True
         self.plane = Plane(SCREEN_WIDTH // 2 - PLANE_WIDTH // 2, SCREEN_HEIGHT - PLANE_HEIGHT - 10)
@@ -99,6 +102,7 @@ class Game:
         self.background = pygame.transform.scale(self.background, (SCREEN_WIDTH, SCREEN_HEIGHT))  # Resize to screen size
         self.congratulations_screen = False  # Track if the congrats screen is shown
         self.game_over_screen = False  # Track if game over screen is shown
+        self.x_button_rect = pygame.Rect(SCREEN_WIDTH - 50, 10, 40, 40)  # X button location and size
 
     def spawn_tower(self):
         """Randomly spawn a tower at the top of the screen, but only if there are less than 3 towers on screen."""
@@ -186,20 +190,20 @@ class Game:
         for flag in self.flags:
             flag.draw(self.screen)
 
+        # Draw the X button
+        pygame.draw.line(self.screen, BLACK, (SCREEN_WIDTH - 45, 15), (SCREEN_WIDTH - 5, 45), 5)
+        pygame.draw.line(self.screen, BLACK, (SCREEN_WIDTH - 45, 45), (SCREEN_WIDTH - 5, 15), 5)
+
         # Display the score
         font = pygame.font.SysFont(None, 36)
-        score_text = font.render(f"Score: {int(self.score)}", True, (0, 0, 0))
+        score_text = font.render(f"Score: {self.score}", True, BLACK)
         self.screen.blit(score_text, (10, 10))
 
-        # Display the number of flags collected
-        flags_text = font.render(f"Flags Collected: {self.flags_collected}", True, (0, 0, 0))
-        self.screen.blit(flags_text, (10, 50))
-
-        # If the congratulations screen is active, display the message
+        # Display the "Congratulations" screen
         if self.congratulations_screen:
             self.display_congratulations()
 
-        # If game over, display the "Game Over" screen
+        # Display the "Game Over" screen
         if self.game_over_screen:
             self.display_game_over()
 
@@ -208,7 +212,7 @@ class Game:
     def display_congratulations(self):
         """Display the congratulations screen."""
         font = pygame.font.SysFont(None, int(SCREEN_WIDTH * 0.065))
-        message = font.render("Congratulations! You destroyed America!", True, BLACK)
+        message = font.render("Congratulations! You destroyed !", True, BLACK)
         text_rect = message.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
         self.screen.blit(message, text_rect)
 
@@ -221,7 +225,7 @@ class Game:
     def display_game_over(self):
         """Display the game over screen."""
         font = pygame.font.SysFont(None, int(SCREEN_WIDTH * 0.08))
-        message = font.render("Game Over! Fuck America!", True, BLACK)
+        message = font.render("Game Over! America!", True, BLACK)
         text_rect = message.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
         self.screen.blit(message, text_rect)
 
@@ -247,6 +251,10 @@ class Game:
                         self.restart_game()
                     elif event.key == pygame.K_q:
                         self.running = False
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if self.x_button_rect.collidepoint(event.pos):
+                    self.running = False
 
     def restart_game(self):
         """Restart the game."""
